@@ -83,7 +83,7 @@ const gLTFMultiLoader = new GLTFMultiLoader()
 
 gLTFMultiLoader.load(
     setGltf,tickGltf,
-    '/car/car.glb','/car/wheel_fl.glb','/car/wheel_fr.glb','/car/wheel_bl.glb','/car/wheel_br.glb')
+    './car/car.glb','./car/wheel_fl.glb','./car/wheel_fr.glb','./car/wheel_bl.glb','./car/wheel_br.glb')
 
 // gltfLoader.load('/car/car.glb',
 //     (gltf) => {
