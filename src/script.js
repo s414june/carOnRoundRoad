@@ -13,15 +13,25 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
-scene.background = new THREE.Color(0xffffff);
+// scene.background = new THREE.Color(0xffffff)
+
 
 // Objects
 // const geometry = new THREE.TorusGeometry(.7, .2, 16, 100);
 
 // Materials
 
-// const material = new THREE.MeshBasicMaterial()
-// material.color = new THREE.Color(0xff0000)
+const material = new THREE.MeshBasicMaterial()
+material.color = new THREE.Color(0xff0000)
+
+//Spherical Panorama 球形全景圖
+// const textureLoader = new THREE.TextureLoader().load('./road/road.jpg', (texture) => {
+//     const mesh = new THREE.Mesh(new THREE.SphereGeometry(1.6, 60, 40), new THREE.MeshBasicMaterial({ map: texture }))
+//     //貼在圓形內側
+//     mesh.material.side = THREE.BackSide
+//     scene.add(mesh)
+//     renderer.render(scene, camera)
+// });
 
 // Mesh
 // const sphere = new THREE.Mesh(geometry, material)
@@ -64,7 +74,7 @@ window.addEventListener('resize', () => {
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
+const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000)
 camera.position.x = 0
 camera.position.y = 0
 camera.position.z = 2
@@ -77,13 +87,13 @@ controls.enableDamping = true
 /**
  * Models
  */
-const gltfLoader = new GLTFLoader()
+// const gltfLoader = new GLTFLoader()
 
 const gLTFMultiLoader = new GLTFMultiLoader()
 
 gLTFMultiLoader.load(
-    setGltf,tickGltf,
-    './car/car.glb','./car/wheel_fl.glb','./car/wheel_fr.glb','./car/wheel_bl.glb','./car/wheel_br.glb')
+    setGltf, tickGltf,
+    './car/car.glb', './car/wheel_fl.glb', './car/wheel_fr.glb', './car/wheel_bl.glb', './car/wheel_br.glb')
 
 // gltfLoader.load('/car/car.glb',
 //     (gltf) => {
@@ -103,7 +113,8 @@ gLTFMultiLoader.load(
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
+    canvas: canvas,
+    antialias: true //反鋸齒
 })
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -155,7 +166,7 @@ function setGltf(gltf) {
 
 
 function tickGltf(allGltf) {
-  
+
     const clock = new THREE.Clock()
 
     const tick = () => {
@@ -179,3 +190,5 @@ function tickGltf(allGltf) {
 
     tick()
 }
+
+// renderer.render(scene, camera)
