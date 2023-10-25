@@ -2,7 +2,7 @@ import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as dat from 'dat.gui'
-import GLTFMultiLoader from './GLTFMultiLoader'
+// import GLTFMultiLoader from './GLTFMultiLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 // Debug
@@ -74,10 +74,10 @@ window.addEventListener('resize', () => {
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 1000)
+const camera = new THREE.PerspectiveCamera(50, sizes.width / sizes.height, 0.1, 1000)
 camera.position.x = 0
-camera.position.y = 0
-camera.position.z = 2
+camera.position.y = 3
+camera.position.z = 10
 scene.add(camera)
 
 // Controls
@@ -87,17 +87,68 @@ controls.enableDamping = true
 /**
  * Models
  */
-// const gltfLoader = new GLTFLoader()
+const gltfLoader = new GLTFLoader()
 
-const gLTFMultiLoader = new GLTFMultiLoader()
+// const gLTFMultiLoader = new GLTFMultiLoader()
 
-gLTFMultiLoader.load(
-    setGltf, tickGltf,
-    './car/car.glb', './car/wheel_fl.glb', './car/wheel_fr.glb', './car/wheel_bl.glb', './car/wheel_br.glb')
+// gLTFMultiLoader.load(
+//     setGltf, tickGltf,
+//     './car/car.glb', './car/wheel_fl.glb', './car/wheel_fr.glb', './car/wheel_bl.glb', './car/wheel_br.glb')
 
-// gltfLoader.load('/car/car.glb',
+async function gLTFMultiLoad() {
+    const result = await multiAsyncLoader(gltfLoader,
+        './car/car.glb', './car/wheel_fl.glb', './car/wheel_fr.glb', './car/wheel_bl.glb', './car/wheel_br.glb'
+    )
+    return result;
+}
+async function multiAsyncLoader(loader, ...urls) {
+    let loadAsyncArr = []
+    urls.forEach(url => {
+        loadAsyncArr.push(loader.loadAsync(url))
+    })
+    return Promise.all(loadAsyncArr)
+}
+
+gLTFMultiLoad().then(gltfs => {
+    gltfs.forEach(gltf => {
+        setGltf(gltf)
+    })
+    tickGltf(gltfs)
+})
+
+const road = new THREE.RingGeometry(4, 5, 100)
+const roadMaterial = new THREE.MeshBasicMaterial({ color: 0x646464, side: THREE.DoubleSide })
+const roadMesh = new THREE.Mesh(road, roadMaterial)
+
+roadMesh.rotation.x = (Math.PI / 2)
+scene.add(roadMesh)
+
+
+function addLines() {
+    let lineRotation = 0
+    while (lineRotation < Math.PI * 2) {
+        addLine()
+    }
+    function addLine() {
+        const line = new THREE.RingGeometry(4.45, 4.55, 100, 1, 0, Math.PI * 2 / 33)
+        const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide })
+        const lineMesh = new THREE.Mesh(line, lineMaterial)
+
+        lineMesh.rotation.x = (Math.PI / 2)
+        lineMesh.position.y = 0.001
+        lineMesh.rotation.z = lineRotation
+        scene.add(lineMesh)
+        lineRotation += Math.PI * 2 / 33 * 1.5
+    }
+}
+
+addLines()
+
+// gltfLoader.load('./car/car.glb',
 //     (gltf) => {
-//         setGltf(gltf)
+//         console.log(gltf)
+//         // setGltf(gltf)
+//         // tickGltf()
 //     },
 //     (progress) => {
 //         console.log('progress')
@@ -127,24 +178,24 @@ renderer.gammaFactor = 2.2
  * Animate
  */
 
-// const clock = new THREE.Clock()
+const clock = new THREE.Clock()
 
-// const tick = () => {
+function tick(gltf) {
 
-//     const elapsedTime = clock.getElapsedTime()
+    const elapsedTime = clock.getElapsedTime()
 
-//     // Update objects
-//     sphere.rotation.y = .5 * elapsedTime
+    // Update objects
+    gltf.scene.rotation.y = .5 * elapsedTime
 
-//     // Update Orbital Controls
-//     // controls.update()
+    // Update Orbital Controls
+    // controls.update()
 
-//     // Render
-//     renderer.render(scene, camera)
+    // Render
+    renderer.render(scene, camera)
 
-//     // Call tick again on the next frame
-//     window.requestAnimationFrame(tick)
-// }
+    // Call tick again on the next frame
+    window.requestAnimationFrame(tick)
+}
 
 // tick()
 
@@ -158,8 +209,11 @@ function setGltf(gltf) {
             child.material.emissiveMap = child.material.map
         }
     })
+    gltf.scene.position.x += 4.5
+    // gltf.scene.position.x -= Math.sin(0.5)*4.5
+    // gltf.scene.position.z -= Math.cos(0.5)*4.5
+    // gltf.scene.position.z -= 4.5*Math.PI/4
     gltf.scene.scale.set(0.4, 0.4, 0.4)
-
     scene.add(gltf.scene)
     // renderer.render(scene, camera)
 }
@@ -172,10 +226,12 @@ function tickGltf(allGltf) {
     const tick = () => {
 
         const elapsedTime = clock.getElapsedTime()
-
+        console.log(elapsedTime)
         // Update objects
         allGltf.forEach(gltf => {
-            gltf.scene.rotation.y = .5 * elapsedTime
+            gltf.scene.rotation.y = .5 * elapsedTime - Math.PI/2
+            gltf.scene.position.x = 0 - Math.sin(.5 * elapsedTime) * 4.5
+            gltf.scene.position.z = 0 - Math.cos(.5 * elapsedTime) * 4.5
         });
 
         // Update Orbital Controls
