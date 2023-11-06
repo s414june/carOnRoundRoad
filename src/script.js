@@ -94,27 +94,50 @@ const gltfLoader = new GLTFLoader()
 // gLTFMultiLoader.load(
 //     setGltf, tickGltf,
 //     './car/car.glb', './car/wheel_fl.glb', './car/wheel_fr.glb', './car/wheel_bl.glb', './car/wheel_br.glb')
-
-async function gLTFMultiLoad() {
-    const result = await multiAsyncLoader(gltfLoader,
-        './car/car.glb', './car/wheel_fl.glb', './car/wheel_fr.glb', './car/wheel_bl.glb', './car/wheel_br.glb'
-    )
-    return result;
-}
-async function multiAsyncLoader(loader, ...urls) {
-    let loadAsyncArr = []
-    urls.forEach(url => {
-        loadAsyncArr.push(loader.loadAsync(url))
+let actions = [] // 所有的动画数组
+let mixer // AnimationMixer 对象
+gltfLoader.loadAsync('./car/car.glb').then((gltf) => {
+    const model = gltf.scene;
+    model.traverse((child) => {
+        if (child.isMesh) {
+            //模型陰影
+            child.castShadow = true
+            //模型自發光
+            child.material.emissive = child.material.color
+            child.material.emissiveMap = child.material.map
+        }
     })
-    return Promise.all(loadAsyncArr)
-}
-
-gLTFMultiLoad().then(gltfs => {
-    gltfs.forEach(gltf => {
-        setGltf(gltf)
-    })
-    tickGltf(gltfs)
+    model.position.x += 4.5
+    model.scale.set(0.4, 0.4, 0.4)
+    scene.add(model)
+    mixer = new THREE.AnimationMixer(model)
+    const clips = gltf.animations;
+    clips.forEach(function(clip) {
+        const action = mixer.clipAction(clip);
+        action.play();
+    });
+    tickGltf(gltf)
 })
+// async function gLTFMultiLoad() {
+//     const result = await multiAsyncLoader(gltfLoader,
+//         './car/car.glb', './car/wheel_fl.glb', './car/wheel_fr.glb', './car/wheel_bl.glb', './car/wheel_br.glb'
+//     )
+//     return result;
+// }
+// async function multiAsyncLoader(loader, ...urls) {
+//     let loadAsyncArr = []
+//     urls.forEach(url => {
+//         loadAsyncArr.push(loader.loadAsync(url))
+//     })
+//     return Promise.all(loadAsyncArr)
+// }
+
+// gLTFMultiLoad().then(gltfs => {
+//     gltfs.forEach(gltf => {
+//         setGltf(gltf)
+//     })
+//     tickGltf(gltfs)
+// })
 
 const road = new THREE.RingGeometry(4, 5, 100)
 const roadMaterial = new THREE.MeshBasicMaterial({ color: 0x646464, side: THREE.DoubleSide })
@@ -219,25 +242,34 @@ function setGltf(gltf) {
 }
 
 
-function tickGltf(allGltf) {
+function tickGltf(gltf) {
 
     const clock = new THREE.Clock()
 
     const tick = () => {
 
         const elapsedTime = clock.getElapsedTime()
-        console.log(elapsedTime)
+        // console.log(elapsedTime)
         // Update objects
-        allGltf.forEach(gltf => {
-            gltf.scene.rotation.y = .5 * elapsedTime - Math.PI/2
-            gltf.scene.position.x = 0 - Math.sin(.5 * elapsedTime) * 4.5
-            gltf.scene.position.z = 0 - Math.cos(.5 * elapsedTime) * 4.5
-        });
+        // allGltf.forEach(gltf => {
+        gltf.scene.rotation.y = .3 * elapsedTime - Math.PI / 2
+        gltf.scene.position.x = 0 - Math.sin(.3 * elapsedTime) * 4.5
+        gltf.scene.position.z = 0 - Math.cos(.3 * elapsedTime) * 4.5
+        // });
 
         // Update Orbital Controls
         // controls.update()
 
         // Render
+        // mixers.forEach(mixer => {
+        //     if (mixer)
+        //         mixer.update(clock.getDelta())
+        // })
+        const delta = clock.getDelta()
+        if (mixer) {
+          mixer.update(delta)
+        }
+
         renderer.render(scene, camera)
 
         // Call tick again on the next frame
@@ -248,3 +280,11 @@ function tickGltf(allGltf) {
 }
 
 // renderer.render(scene, camera)
+
+function animate() {
+    if(mixer)
+        mixer.update(clock.getDelta());
+    renderer.render(scene, camera);
+}
+
+renderer.setAnimationLoop(animate);
